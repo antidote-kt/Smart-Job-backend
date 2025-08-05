@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: SmartJob-backend
+  profiles:
+    active: dev
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${JDBC_URL}
+    username: ${JDBC_USERNAME}
+    password: ${JDBC_PASSWORD}
+server:
+  port: ${SERVER_PORT}
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.sysu.entity
+  configuration:
+    map-underscore-to-camel-case: true
+com:
+  jwt:
+    user-secret-key: ${KEY}
+    user-ttl: ${TTL}
+    user-token-name: authentication
+langchain4j:
+  community:
+    dashscope:
+      chat-model:
+        model-name: qwen-plus
+        api-key: ${API_KEY}
+      embedding-model:
+        model-name: text-embedding-v4
+        api-key: ${API_KEY}
+      streaming-chat-model:
+        model-name: qwen-plus
+        api-key: ${API_KEY}
+bigmodel:
+  api-key: ${MODEL_KEY}
+
