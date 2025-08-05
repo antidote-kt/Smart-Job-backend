@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sysu.smartjob.mapper.UserMapper">
+    
+    <insert id="insert" parameterType="com.sysu.smartjob.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (username, email, password, nickname, created_at, updated_at, status)
+        VALUES (#{username}, #{email}, #{password}, #{nickname}, #{createdAt}, #{updatedAt}, #{status})
+    </insert>
+    
+    <select id="select" parameterType="com.sysu.smartjob.entity.User" resultType="com.sysu.smartjob.entity.User">
+        SELECT * FROM user
+        <where>
+            <if test="id != null">
+                AND id = #{id}
+            </if>
+            <if test="username != null and username != ''">
+                AND username = #{username}
+            </if>
+            <if test="email != null and email != ''">
+                AND email = #{email}
+            </if>
+            <if test="password != null and password != ''">
+                AND password = #{password}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="nickname != null">
+                AND nickname like CONCAT('%',#{nickname},'%')
+            </if>
+        </where>
+    </select>
+    
+    <update id="update" parameterType="com.sysu.smartjob.entity.User">
+        UPDATE user
+        <set>
+            <if test="username != null and username != ''">
+                username = #{username},
+            </if>
+            <if test="email != null and email != ''">
+                email = #{email},
+            </if>
+            <if test="password != null and password != ''">
+                password = #{password},
+            </if>
+            <if test="nickname != null and nickname != ''">
+                nickname = #{nickname},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="updatedAt != null">
+                updated_at = #{updatedAt}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="delete" parameterType="com.sysu.smartjob.entity.User">
+        DELETE FROM user WHERE id = #{id}
+    </delete>
+    
+</mapper>
