@@ -79,20 +79,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User updateProfile(Long userId, String nickname, String email) {
-        User existingUser = findById(userId);
+    public User updateProfile(UserDTO userDTO) {
+        User existingUser = findById(userDTO.getUserId());
         
-        if (!existingUser.getEmail().equals(email)) {
+        if (!existingUser.getEmail().equals(userDTO.getEmail())) {
             User emailCheck = new User();
-            emailCheck.setEmail(email);
+            emailCheck.setEmail(userDTO.getEmail());
             User found = userMapper.select(emailCheck);
-            if (found != null && !found.getId().equals(userId)) {
+            if (found != null && !found.getId().equals(userDTO.getUserId())) {
                 throw new UserNotLoginException("邮箱已被其他用户使用");
             }
         }
 
-        existingUser.setNickname(nickname);
-        existingUser.setEmail(email);
+        existingUser.setNickname(userDTO.getNickname());
+        existingUser.setEmail(userDTO.getEmail());
         existingUser.setUpdatedAt(LocalDateTime.now());
 
         int result = userMapper.update(existingUser);

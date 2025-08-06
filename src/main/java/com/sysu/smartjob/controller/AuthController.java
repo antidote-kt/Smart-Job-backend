@@ -28,17 +28,15 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/register")
-    public Result<UserVO> register(@RequestBody UserDTO userDTO) {
-        User user = userService.register(userDTO);
-
-        UserVO userVO = new UserVO();
-        BeanUtils.copyProperties(user, userVO);
-
-        return Result.success(userVO, "注册成功");
+    public Result<Void> register(@RequestBody UserDTO userDTO) {
+        log.info("注册：{}", userDTO);
+        userService.register(userDTO);
+        return Result.success("注册成功");
     }
 
     @PostMapping("/login")
     public Result<LoginVO> login(@RequestBody LoginDTO loginDTO) {
+        log.info("登录:{}", loginDTO);
         User user = userService.login(loginDTO.getUsername(), loginDTO.getPassword());
 
         LoginVO loginVO = new LoginVO();
@@ -58,6 +56,7 @@ public class AuthController {
 
     @GetMapping("/profile")
     public Result<UserVO> getProfile(@RequestParam Long userId) {
+        log.info("获取用户信息：{}", userId);
         User user = userService.findById(userId);
         
         UserVO userVO = new UserVO();
@@ -67,14 +66,9 @@ public class AuthController {
     }
 
     @PutMapping("/profile")
-    public Result<UserVO> updateProfile(@RequestParam Long userId,
-                                      @RequestParam String nickname,
-                                      @RequestParam String email) {
-        User user = userService.updateProfile(userId, nickname, email);
-        
-        UserVO userVO = new UserVO();
-        BeanUtils.copyProperties(user, userVO);
-
-        return Result.success(userVO, "更新成功");
+    public Result<Void> updateProfile(@RequestBody UserDTO userDTO) {
+        log.info("更新用户信息：{}", userDTO);
+        userService.updateProfile(userDTO);
+        return Result.success("更新成功");
     }
 }

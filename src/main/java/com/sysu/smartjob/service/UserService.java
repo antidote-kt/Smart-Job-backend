@@ -11,7 +11,7 @@ public interface UserService {
     
     User findById(Long userId);
     
-    User updateProfile(Long userId, String nickname, String email);
+    User updateProfile(UserDTO userDTO);
 
 
 }

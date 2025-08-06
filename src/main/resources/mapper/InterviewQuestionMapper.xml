@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sysu.smartjob.mapper.InterviewQuestionMapper">
+
+    <insert id="insert" parameterType="com.sysu.smartjob.entity.InterviewQuestion" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO interview_question(interview_id, question_text, user_answer, ai_score, ai_feedback, answer_time, created_at)
+        VALUES(#{interviewId}, #{questionText}, #{userAnswer}, #{aiScore}, #{aiFeedback}, #{answerTime}, #{createdAt})
+    </insert>
+
+    <update id="update" parameterType="com.sysu.smartjob.entity.InterviewQuestion">
+        UPDATE interview_question
+        <set>
+            <if test="questionText != null and questionText != ''">question_text = #{questionText},</if>
+            <if test="userAnswer != null">user_answer = #{userAnswer},</if>
+            <if test="aiScore != null">ai_score = #{aiScore},</if>
+            <if test="aiFeedback != null">ai_feedback = #{aiFeedback},</if>
+            <if test="answerTime != null">answer_time = #{answerTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="findById" parameterType="com.sysu.smartjob.entity.InterviewQuestion" resultType="com.sysu.smartjob.entity.InterviewQuestion">
+        SELECT * FROM interview_question WHERE id = #{id}
+    </select>
+
+    <select id="findByCondition" parameterType="com.sysu.smartjob.entity.InterviewQuestion" resultType="com.sysu.smartjob.entity.InterviewQuestion">
+        SELECT * FROM interview_question
+        <where>
+            <if test="interviewId != null">AND interview_id = #{interviewId}</if>
+            <if test="userAnswer != null">AND user_answer IS NOT NULL</if>
+        </where>
+        ORDER BY created_at ASC
+    </select>
+
+    <delete id="deleteById" parameterType="com.sysu.smartjob.entity.InterviewQuestion">
+        DELETE FROM interview_question WHERE id = #{id}
+    </delete>
+
+</mapper>
