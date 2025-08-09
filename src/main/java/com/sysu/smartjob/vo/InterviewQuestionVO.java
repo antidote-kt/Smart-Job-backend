@@ -19,7 +19,7 @@ public class InterviewQuestionVO {
     
     private String userAnswer;
     
-    private BigDecimal aiScore;
+    private Double aiScore;
     
     private String aiFeedback;
     

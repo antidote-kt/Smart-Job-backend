@@ -49,7 +49,7 @@
         ORDER BY created_at DESC
     </select>
 
-    <delete id="deleteById" parameterType="com.sysu.smartjob.entity.Interview">
+    <delete id="deleteById" parameterType="java.lang.Long">
         DELETE FROM interview WHERE id = #{id}
     </delete>
 

@@ -33,7 +33,7 @@ public class Interview {
     
     private Integer answeredQuestions;
     
-    private BigDecimal overallScore;
+    private Double overallScore;
     
     private String aiFeedback;
     

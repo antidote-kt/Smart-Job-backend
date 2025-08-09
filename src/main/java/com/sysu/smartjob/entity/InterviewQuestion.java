@@ -21,7 +21,7 @@ public class InterviewQuestion {
     
     private String userAnswer;
     
-    private BigDecimal aiScore;
+    private Double aiScore;
     
     private String aiFeedback;
     

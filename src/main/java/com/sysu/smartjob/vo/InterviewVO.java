@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.sysu.smartjob.entity.InterviewReport;
 
 @Data
 @Builder
@@ -40,4 +41,6 @@ public class InterviewVO {
     private LocalDateTime endTime;
     
     private LocalDateTime createdAt;
+    
+    private InterviewReport report;
 }

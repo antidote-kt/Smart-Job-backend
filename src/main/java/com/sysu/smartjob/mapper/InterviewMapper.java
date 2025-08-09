@@ -16,5 +16,5 @@ public interface InterviewMapper {
     
     List<Interview> findByCondition(Interview interview);
     
-    void deleteById(Interview interview);
+    void deleteById(Long id);
 }

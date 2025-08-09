@@ -29,7 +29,7 @@ CREATE TABLE interview (
     status TINYINT DEFAULT 1 COMMENT '状态: 1-进行中 2-已完成 3-已取消',
     total_questions INT DEFAULT 0 COMMENT '总题目数',
     answered_questions INT DEFAULT 0 COMMENT '已回答题目数',
-    overall_score DECIMAL(5,2) COMMENT '综合得分(由AI评估)',
+    overall_score DOUBLE(5,2) COMMENT '综合得分(由AI评估)',
     ai_feedback TEXT COMMENT 'AI评价反馈',
     start_time DATETIME COMMENT '开始时间',
     end_time DATETIME COMMENT '结束时间',
@@ -44,7 +44,7 @@ CREATE TABLE interview_question (
     interview_id BIGINT NOT NULL COMMENT '面试ID',
     question_text TEXT NOT NULL COMMENT '题目内容(由AI生成)',
     user_answer TEXT COMMENT '用户答案',
-    ai_score DECIMAL(5,2) COMMENT 'AI评分',
+    ai_score DOUBLE(5,2) COMMENT 'AI评分',
     ai_feedback TEXT COMMENT 'AI反馈评价',
     answer_time DATETIME COMMENT '回答时间',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -75,3 +75,46 @@ CREATE TABLE job_requirements (
 CREATE INDEX idx_job_category ON job_requirements(category);
 CREATE INDEX idx_job_level ON job_requirements(level);
 CREATE INDEX idx_job_active ON job_requirements(is_active);
+
+-- 答案评估表
+CREATE TABLE answer_evaluations (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    qa_record_id BIGINT NOT NULL COMMENT '问答记录ID',
+    professional_score DOUBLE(5,2) COMMENT '专业性评分',
+    logic_score DOUBLE(5,2) COMMENT '逻辑性评分',
+    completeness_score DOUBLE(5,2) COMMENT '完整性评分',
+    overall_score DOUBLE(5,2) COMMENT '综合评分',
+    strengths TEXT COMMENT '优点',
+    weaknesses TEXT COMMENT '不足',
+    suggestions TEXT COMMENT '改进建议',
+    ai_feedback JSON COMMENT 'AI详细反馈',
+    evaluation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (qa_record_id) REFERENCES interview_question(id) ON DELETE CASCADE
+) COMMENT='答案评估表';
+
+-- 面试报告表
+CREATE TABLE interview_reports (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    session_id BIGINT NOT NULL COMMENT '面试会话ID',
+    overall_score DOUBLE(5,2) COMMENT '综合得分',
+    professional_score DOUBLE(5,2) COMMENT '专业性平均分',
+    logic_score DOUBLE(5,2) COMMENT '逻辑性平均分',
+    completeness_score DOUBLE(5,2) COMMENT '完整性平均分',
+    performance_analysis JSON COMMENT '表现分析',
+    skill_assessment JSON COMMENT '技能评估',
+    improvement_suggestions TEXT COMMENT '总体改进建议',
+    strong_points TEXT COMMENT '优势',
+    weak_points TEXT COMMENT '劣势',
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES interview(id) ON DELETE CASCADE
+) COMMENT='面试报告表';
+
+-- 创建评估相关索引
+CREATE INDEX idx_evaluation_qa_record ON answer_evaluations(qa_record_id);
+CREATE INDEX idx_evaluation_time ON answer_evaluations(evaluation_time);
+CREATE INDEX idx_report_session ON interview_reports(session_id);
+CREATE INDEX idx_report_generated ON interview_reports(generated_at);
