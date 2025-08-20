@@ -12,7 +12,7 @@ public interface InterviewMapper {
     
     void update(Interview interview);
     
-    Interview findById(Interview interview);
+    Interview findById(Long id);
     
     List<Interview> findByCondition(Interview interview);
     

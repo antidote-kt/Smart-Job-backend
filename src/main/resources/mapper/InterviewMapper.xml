@@ -5,11 +5,11 @@
 
     <insert id="insert" parameterType="com.sysu.smartjob.entity.Interview" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO interview(user_id, title, position, company, interview_type, difficulty_level, 
-                             status, total_questions, answered_questions, overall_score, ai_feedback, 
-                             start_time, end_time, created_at, updated_at)
+                             status, total_questions, answered_questions, overall_score, 
+                             start_time, end_time, updated_at)
         VALUES(#{userId}, #{title}, #{position}, #{company}, #{interviewType}, #{difficultyLevel}, 
-               #{status}, #{totalQuestions}, #{answeredQuestions}, #{overallScore}, #{aiFeedback}, 
-               #{startTime}, #{endTime}, #{createdAt}, #{updatedAt})
+               #{status}, #{totalQuestions}, #{answeredQuestions}, #{overallScore}, 
+               #{startTime}, #{endTime}, #{updatedAt})
     </insert>
 
     <update id="update" parameterType="com.sysu.smartjob.entity.Interview">
@@ -24,7 +24,6 @@
             <if test="totalQuestions != null">total_questions = #{totalQuestions},</if>
             <if test="answeredQuestions != null">answered_questions = #{answeredQuestions},</if>
             <if test="overallScore != null">overall_score = #{overallScore},</if>
-            <if test="aiFeedback != null">ai_feedback = #{aiFeedback},</if>
             <if test="startTime != null">start_time = #{startTime},</if>
             <if test="endTime != null">end_time = #{endTime},</if>
             updated_at = NOW()
@@ -32,7 +31,7 @@
         WHERE id = #{id}
     </update>
 
-    <select id="findById" parameterType="com.sysu.smartjob.entity.Interview" resultType="com.sysu.smartjob.entity.Interview">
+    <select id="findById" resultType="com.sysu.smartjob.entity.Interview">
         SELECT * FROM interview WHERE id = #{id}
     </select>
 
@@ -46,7 +45,7 @@
             <if test="interviewType != null">AND interview_type = #{interviewType}</if>
             <if test="difficultyLevel != null">AND difficulty_level = #{difficultyLevel}</if>
         </where>
-        ORDER BY created_at DESC
+        ORDER BY updated_at DESC
     </select>
 
     <delete id="deleteById" parameterType="java.lang.Long">

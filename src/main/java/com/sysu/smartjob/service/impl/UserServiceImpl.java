@@ -19,7 +19,7 @@ public class UserServiceImpl implements UserService {
     private UserMapper userMapper;
 
     @Override
-    public User register(UserDTO userDTO) {
+    public void register(UserDTO userDTO) {
         // 检查用户名是否存在
         User existingUser = new User();
         existingUser.setUsername(userDTO.getUsername());
@@ -46,7 +46,7 @@ public class UserServiceImpl implements UserService {
 
         int result = userMapper.insert(user);
         if (result > 0) {
-            return user;
+            return;
         }
         throw new UserNotLoginException("注册失败");
     }
@@ -79,7 +79,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User updateProfile(UserDTO userDTO) {
+    public void updateProfile(UserDTO userDTO) {
         User existingUser = findById(userDTO.getUserId());
         
         if (!existingUser.getEmail().equals(userDTO.getEmail())) {
@@ -97,8 +97,28 @@ public class UserServiceImpl implements UserService {
 
         int result = userMapper.update(existingUser);
         if (result > 0) {
-            return existingUser;
+            return;
         }
         throw new UserNotLoginException("更新失败");
+    }
+
+    @Override
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        User existingUser = findById(userId);
+        
+        // 验证旧密码
+        String oldPasswordHash = DigestUtils.md5DigestAsHex(oldPassword.getBytes());
+        if (!existingUser.getPassword().equals(oldPasswordHash)) {
+            throw new UserNotLoginException("旧密码错误");
+        }
+        
+        // 更新密码
+        existingUser.setPassword(DigestUtils.md5DigestAsHex(newPassword.getBytes()));
+        existingUser.setUpdatedAt(LocalDateTime.now());
+        
+        int result = userMapper.update(existingUser);
+        if (result <= 0) {
+            throw new UserNotLoginException("密码修改失败");
+        }
     }
 }

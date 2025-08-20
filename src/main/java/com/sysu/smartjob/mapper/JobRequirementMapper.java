@@ -12,7 +12,7 @@ public interface JobRequirementMapper {
     
     void update(JobRequirement jobRequirement);
     
-    JobRequirement findById(JobRequirement jobRequirement);
+    JobRequirement findById(Long id);
     
     List<JobRequirement> findByCondition(JobRequirement jobRequirement);
     
@@ -22,5 +22,5 @@ public interface JobRequirementMapper {
     
     Long countByCategory(String category);
     
-    void deleteById(JobRequirement jobRequirement);
+    void deleteById(Long id);
 }

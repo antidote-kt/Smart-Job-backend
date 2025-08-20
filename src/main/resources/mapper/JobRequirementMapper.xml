@@ -18,12 +18,12 @@
             <if test="requirements != null">requirements = #{requirements},</if>
             <if test="skills != null">skills = #{skills},</if>
             <if test="isActive != null">is_active = #{isActive},</if>
-            updated_at = NOW()
+            <if test="updatedAt != null">updated_at = #{updatedAt}</if>
         </set>
         WHERE id = #{id}
     </update>
 
-    <select id="findById" parameterType="com.sysu.smartjob.entity.JobRequirement" resultType="com.sysu.smartjob.entity.JobRequirement">
+    <select id="findById" resultType="com.sysu.smartjob.entity.JobRequirement">
         SELECT * FROM job_requirements WHERE id = #{id}
     </select>
 
@@ -50,7 +50,7 @@
         SELECT COUNT(*) FROM job_requirements WHERE category = #{category} AND is_active = 1
     </select>
 
-    <delete id="deleteById" parameterType="com.sysu.smartjob.entity.JobRequirement">
+    <delete id="deleteById">
         DELETE FROM job_requirements WHERE id = #{id}
     </delete>
 

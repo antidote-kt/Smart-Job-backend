@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import com.sysu.smartjob.entity.InterviewReport;
 
@@ -32,15 +31,11 @@ public class InterviewVO {
     
     private Integer answeredQuestions;
     
-    private BigDecimal overallScore;
-    
-    private String aiFeedback;
+    private Double overallScore;
     
     private LocalDateTime startTime;
     
     private LocalDateTime endTime;
-    
-    private LocalDateTime createdAt;
     
     private InterviewReport report;
 }

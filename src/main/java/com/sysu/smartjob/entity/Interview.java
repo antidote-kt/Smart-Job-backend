@@ -35,13 +35,9 @@ public class Interview {
     
     private Double overallScore;
     
-    private String aiFeedback;
-    
     private LocalDateTime startTime;
     
     private LocalDateTime endTime;
-    
-    private LocalDateTime createdAt;
     
     private LocalDateTime updatedAt;
 }

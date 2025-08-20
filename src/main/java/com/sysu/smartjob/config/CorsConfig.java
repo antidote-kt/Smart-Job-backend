@@ -26,6 +26,9 @@ public class CorsConfig {
         config.setAllowCredentials(true);
         // 暴露响应头
         config.addExposedHeader("satoken");
+        config.addExposedHeader("Content-Type");
+        config.addExposedHeader("Cache-Control");
+        config.addExposedHeader("Connection");
         // 设置跨域请求的有效期，单位秒
         config.setMaxAge(3600L);
 

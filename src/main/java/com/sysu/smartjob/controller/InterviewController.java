@@ -17,7 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.http.ResponseEntity;
+import reactor.core.publisher.Flux;
 
+import jakarta.servlet.http.HttpServletResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,16 +57,16 @@ public class InterviewController {
         return Result.success(vo, "面试开始");
     }
 
-    @GetMapping("/{id}/next-question")
-    public Result<InterviewQuestionVO> getNextQuestion(@PathVariable Long id) {
-        log.info("获取下一题，面试ID：{}", id);
-        InterviewQuestion question = interviewService.getNextQuestion(id);
-        
-        InterviewQuestionVO vo = new InterviewQuestionVO();
-        BeanUtils.copyProperties(question, vo);
-        
-        return Result.success(vo, "获取题目成功");
-    }
+//    @GetMapping("/{id}/next-question")
+//    public Result<InterviewQuestionVO> getNextQuestion(@PathVariable Long id) {
+//        log.info("获取下一题，面试ID：{}", id);
+//        InterviewQuestion question = interviewService.getNextQuestion(id);
+//
+//        InterviewQuestionVO vo = new InterviewQuestionVO();
+//        BeanUtils.copyProperties(question, vo);
+//
+//        return Result.success(vo, "获取题目成功");
+//    }
 
     @PostMapping("/submit-answer")
     public Result<AnswerEvaluationVO> submitAnswer(@RequestBody AnswerSubmitDTO dto) {
@@ -73,6 +78,21 @@ public class InterviewController {
     @PostMapping("/{id}/finish")
     public Result<InterviewVO> finishInterview(@PathVariable Long id) {
         log.info("结束面试，面试ID：{}", id);
+        
+        // 获取当前用户ID
+        Long currentUserId = BaseContext.getCurrentId();
+        log.info("当前用户ID：{}", currentUserId);
+        
+        // 验证面试是否属于当前用户
+        Interview currentInterview = interviewService.getInterviewById(id);
+        if (currentInterview == null) {
+            return Result.error("面试不存在");
+        }
+        
+        if (!currentInterview.getUserId().equals(currentUserId)) {
+            return Result.error("无权限操作此面试");
+        }
+        
         Interview interview = interviewService.finishInterview(id);
         
         InterviewVO vo = new InterviewVO();
@@ -159,4 +179,31 @@ public class InterviewController {
         List<AnswerEvaluation> evaluations = interviewService.getInterviewEvaluations(id);
         return Result.success(evaluations, "获取评估详情成功");
     }
+    
+    @GetMapping(value = "/{id}/next-question-stream", produces = "text/event-stream;charset=UTF-8")
+    public ResponseEntity<Flux<ServerSentEvent<String>>> getNextQuestionStream(@PathVariable Long id, HttpServletResponse response) {
+        log.info("获取下一题（流式），面试ID：{}", id);
+        
+        // 设置响应编码
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/event-stream;charset=UTF-8");
+        
+        Flux<ServerSentEvent<String>> flux = interviewService.getNextQuestionStream(id)
+                .map(chunk -> {
+                    // 确保chunk使用UTF-8编码
+                    String utf8Chunk = new String(chunk.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+                    log.info("发送UTF-8编码片段: {}", utf8Chunk);
+                    return ServerSentEvent.<String>builder()
+                            .data(utf8Chunk)
+                            .event("message")
+                            .build();
+                });
+                
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/event-stream;charset=UTF-8")
+                .header("Cache-Control", "no-cache")
+                .header("Connection", "keep-alive")
+                .body(flux);
+    }
+    
 }

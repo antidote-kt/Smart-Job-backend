@@ -21,11 +21,5 @@ public class InterviewQuestion {
     
     private String userAnswer;
     
-    private Double aiScore;
-    
-    private String aiFeedback;
-    
     private LocalDateTime answerTime;
-    
-    private LocalDateTime createdAt;
 }

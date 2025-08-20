@@ -5,13 +5,15 @@ import com.sysu.smartjob.entity.User;
 
 public interface UserService {
 
-    User register(UserDTO userDTO);
+    void register(UserDTO userDTO);
 
     User login(String username, String password);
     
     User findById(Long userId);
     
-    User updateProfile(UserDTO userDTO);
+    void updateProfile(UserDTO userDTO);
+    
+    void changePassword(Long userId, String oldPassword, String newPassword);
 
 
 }

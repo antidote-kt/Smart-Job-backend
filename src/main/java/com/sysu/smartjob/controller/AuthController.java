@@ -1,7 +1,9 @@
 package com.sysu.smartjob.controller;
 
 import com.sysu.smartjob.constant.JwtClaimsConstant;
+import com.sysu.smartjob.context.BaseContext;
 import com.sysu.smartjob.dto.LoginDTO;
+import com.sysu.smartjob.dto.PasswordDTO;
 import com.sysu.smartjob.dto.UserDTO;
 import com.sysu.smartjob.entity.User;
 import com.sysu.smartjob.property.JwtProperties;
@@ -55,7 +57,8 @@ public class AuthController {
     }
 
     @GetMapping("/profile")
-    public Result<UserVO> getProfile(@RequestParam Long userId) {
+    public Result<UserVO> getProfile() {
+        Long userId = BaseContext.getCurrentId();
         log.info("获取用户信息：{}", userId);
         User user = userService.findById(userId);
         
@@ -68,7 +71,16 @@ public class AuthController {
     @PutMapping("/profile")
     public Result<Void> updateProfile(@RequestBody UserDTO userDTO) {
         log.info("更新用户信息：{}", userDTO);
+        userDTO.setUserId(BaseContext.getCurrentId());
         userService.updateProfile(userDTO);
         return Result.success("更新成功");
+    }
+
+    @PutMapping("/password")
+    public Result<Void> changePassword(@RequestBody PasswordDTO passwordDTO) {
+        log.info("修改密码请求");
+        Long userId = BaseContext.getCurrentId();
+        userService.changePassword(userId, passwordDTO.getOldPassword(), passwordDTO.getNewPassword());
+        return Result.success("密码修改成功");
     }
 }
