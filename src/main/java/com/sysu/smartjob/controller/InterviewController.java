@@ -127,8 +127,14 @@ public class InterviewController {
             return Result.error("面试不存在");
         }
         
+        log.info("面试详情，ID：{}，状态：{}，开始时间：{}，结束时间：{}", 
+                 interview.getId(), interview.getStatus(), interview.getStartTime(), interview.getEndTime());
+        
         InterviewVO vo = new InterviewVO();
         BeanUtils.copyProperties(interview, vo);
+        
+        log.info("转换后的VO，状态：{}，开始时间：{}，结束时间：{}", 
+                 vo.getStatus(), vo.getStartTime(), vo.getEndTime());
         
         // 如果是已完成的面试，添加报告信息
         if (interview.getStatus() != null && interview.getStatus() == InterviewStatusConstant.STATUS_COMPLETED) {

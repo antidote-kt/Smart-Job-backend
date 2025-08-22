@@ -30,11 +30,7 @@ public class JobPositionController {
         List<JobRequirement> jobRequirements = jobRequirementService.getJobRequirementsByCondition(queryDTO);
         
         List<JobRequirementVO> vos = jobRequirements.stream()
-                .map(job -> {
-                    JobRequirementVO vo = new JobRequirementVO();
-                    BeanUtils.copyProperties(job, vo);
-                    return vo;
-                })
+                .map(this::convertToVO)
                 .collect(Collectors.toList());
         
         return Result.success(vos, "获取岗位列表成功");
@@ -49,9 +45,7 @@ public class JobPositionController {
             return Result.error("岗位不存在");
         }
         
-        JobRequirementVO vo = new JobRequirementVO();
-        BeanUtils.copyProperties(jobRequirement, vo);
-        
+        JobRequirementVO vo = convertToVO(jobRequirement);
         return Result.success(vo, "获取岗位详情成功");
     }
 
@@ -65,12 +59,10 @@ public class JobPositionController {
     @PostMapping
     public Result<JobRequirementVO> createPosition(@RequestBody JobRequirementCreateDTO createDTO) {
         log.info("创建岗位，参数：{}", createDTO);
-        JobRequirement jobRequirement = new JobRequirement();
-        BeanUtils.copyProperties(createDTO, jobRequirement);
+        JobRequirement jobRequirement = convertFromCreateDTO(createDTO);
         
         JobRequirement created = jobRequirementService.createJobRequirement(jobRequirement);
-        JobRequirementVO vo = new JobRequirementVO();
-        BeanUtils.copyProperties(created, vo);
+        JobRequirementVO vo = convertToVO(created);
         
         return Result.success(vo, "创建岗位成功");
     }
@@ -85,11 +77,28 @@ public class JobPositionController {
             return Result.error("岗位不存在");
         }
         
-        BeanUtils.copyProperties(updateDTO, existingJob);
+        // 手动复制属性并处理JSON转换
+        if (updateDTO.getName() != null) {
+            existingJob.setName(updateDTO.getName());
+        }
+        if (updateDTO.getCategory() != null) {
+            existingJob.setCategory(updateDTO.getCategory());
+        }
+        if (updateDTO.getLevel() != null) {
+            existingJob.setLevel(updateDTO.getLevel());
+        }
+        if (updateDTO.getDescription() != null) {
+            existingJob.setDescription(updateDTO.getDescription());
+        }
+        if (updateDTO.getRequirements() != null) {
+            existingJob.setRequirementsList(updateDTO.getRequirements());
+        }
+        if (updateDTO.getSkills() != null) {
+            existingJob.setSkillsList(updateDTO.getSkills());
+        }
         
         JobRequirement updated = jobRequirementService.updateJobRequirement(existingJob);
-        JobRequirementVO vo = new JobRequirementVO();
-        BeanUtils.copyProperties(updated, vo);
+        JobRequirementVO vo = convertToVO(updated);
         
         return Result.success(vo, "更新岗位成功");
     }
@@ -105,5 +114,21 @@ public class JobPositionController {
         
         jobRequirementService.deleteJobRequirement(id);
         return Result.success(null, "删除岗位成功");
+    }
+    
+    private JobRequirementVO convertToVO(JobRequirement entity) {
+        JobRequirementVO vo = new JobRequirementVO();
+        BeanUtils.copyProperties(entity, vo);
+        vo.setRequirements(entity.getRequirementsList());
+        vo.setSkills(entity.getSkillsList());
+        return vo;
+    }
+    
+    private JobRequirement convertFromCreateDTO(JobRequirementCreateDTO dto) {
+        JobRequirement entity = new JobRequirement();
+        BeanUtils.copyProperties(dto, entity);
+        entity.setRequirementsList(dto.getRequirements());
+        entity.setSkillsList(dto.getSkills());
+        return entity;
     }
 }

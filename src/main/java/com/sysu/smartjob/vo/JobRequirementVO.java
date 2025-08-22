@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -22,9 +23,9 @@ public class JobRequirementVO {
     
     private String description;
     
-    private String requirements;
+    private List<String> requirements;
     
-    private String skills;
+    private List<String> skills;
     
     private LocalDateTime createdAt;
 }

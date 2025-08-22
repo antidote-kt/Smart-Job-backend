@@ -27,6 +27,7 @@ import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 @Service
 @Slf4j
@@ -300,7 +301,9 @@ public class InterviewServiceImpl implements InterviewService {
         interview.setEndTime(LocalDateTime.now());
         interview.setUpdatedAt(LocalDateTime.now());
         
+        log.info("即将更新面试状态，面试ID：{}，状态：{}，结束时间：{}", interviewId, interview.getStatus(), interview.getEndTime());
         interviewMapper.update(interview);
+        log.info("面试状态已更新完成，面试ID：{}", interviewId);
         
         // 自动生成面试报告
         generateInterviewReport(interviewId);
@@ -469,9 +472,21 @@ public class InterviewServiceImpl implements InterviewService {
             throw new InterviewException("面试不存在");
         }
         
-        // 从answer_evaluation表中获取详细评估
-        AnswerEvaluation evalQuery = AnswerEvaluation.builder().qaRecordId(interviewId).build();
-        return answerEvaluationMapper.findByCondition(evalQuery);
+        // 先获取该面试的所有问题
+        InterviewQuestion questionQuery = InterviewQuestion.builder().interviewId(interviewId).build();
+        List<InterviewQuestion> questions = questionMapper.findByCondition(questionQuery);
+        
+        // 然后获取这些问题的所有评估
+        List<AnswerEvaluation> allEvaluations = new ArrayList<>();
+        for (InterviewQuestion question : questions) {
+            if (question.getId() != null) {
+                AnswerEvaluation evalQuery = AnswerEvaluation.builder().qaRecordId(question.getId()).build();
+                List<AnswerEvaluation> evaluations = answerEvaluationMapper.findByCondition(evalQuery);
+                allEvaluations.addAll(evaluations);
+            }
+        }
+        
+        return allEvaluations;
     }
     
     @Override
