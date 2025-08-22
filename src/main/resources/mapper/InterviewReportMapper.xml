@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sysu.smartjob.mapper.InterviewReportMapper">
+
+    <!-- 插入面试报告 -->
+    <insert id="insert" parameterType="com.sysu.smartjob.entity.InterviewReport" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO interview_reports (
+            session_id,
+            overall_score,
+            professional_score,
+            logic_score,
+            completeness_score,
+            performance_analysis,
+            skill_assessment,
+            improvement_suggestions,
+            strong_points,
+            weak_points,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{sessionId},
+            #{overallScore},
+            #{professionalScore},
+            #{logicScore},
+            #{completenessScore},
+            #{performanceAnalysis},
+            #{skillAssessment},
+            #{improvementSuggestions},
+            #{strongPoints},
+            #{weakPoints},
+            #{createdAt},
+            #{updatedAt}
+        )
+    </insert>
+
+    <!-- 根据ID查询 -->
+    <select id="findById" parameterType="com.sysu.smartjob.entity.InterviewReport" resultType="com.sysu.smartjob.entity.InterviewReport">
+        SELECT * FROM interview_reports WHERE id = #{id}
+    </select>
+
+    <!-- 根据条件查询 -->
+    <select id="findByCondition" parameterType="com.sysu.smartjob.entity.InterviewReport" resultType="com.sysu.smartjob.entity.InterviewReport">
+        SELECT * FROM interview_reports
+        <where>
+            <if test="sessionId != null">
+                AND session_id = #{sessionId}
+            </if>
+            <if test="id != null">
+                AND id = #{id}
+            </if>
+        </where>
+    </select>
+
+    <!-- 更新面试报告 -->
+    <update id="update" parameterType="com.sysu.smartjob.entity.InterviewReport">
+        UPDATE interview_reports
+        <set>
+            <if test="overallScore != null">overall_score = #{overallScore},</if>
+            <if test="professionalScore != null">professional_score = #{professionalScore},</if>
+            <if test="logicScore != null">logic_score = #{logicScore},</if>
+            <if test="completenessScore != null">completeness_score = #{completenessScore},</if>
+            <if test="performanceAnalysis != null">performance_analysis = #{performanceAnalysis},</if>
+            <if test="skillAssessment != null">skill_assessment = #{skillAssessment},</if>
+            <if test="improvementSuggestions != null">improvement_suggestions = #{improvementSuggestions},</if>
+            <if test="strongPoints != null">strong_points = #{strongPoints},</if>
+            <if test="weakPoints != null">weak_points = #{weakPoints},</if>
+            updated_at = #{updatedAt}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID删除 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM interview_reports WHERE id = #{id}
+    </delete>
+
+</mapper>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sysu.smartjob.mapper.AnswerEvaluationMapper">
+
+    <!-- 插入评估记录 -->
+    <insert id="insert" parameterType="com.sysu.smartjob.entity.AnswerEvaluation" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO answer_evaluations (
+            qa_record_id,
+            professional_score,
+            logic_score,
+            completeness_score,
+            overall_score,
+            ai_feedback,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{qaRecordId},
+            #{professionalScore},
+            #{logicScore},
+            #{completenessScore},
+            #{overallScore},
+            #{aiFeedback},
+            #{createdAt},
+            #{updatedAt}
+        )
+    </insert>
+
+    <!-- 根据ID查询 -->
+    <select id="findById" parameterType="com.sysu.smartjob.entity.AnswerEvaluation" resultType="com.sysu.smartjob.entity.AnswerEvaluation">
+        SELECT * FROM answer_evaluations WHERE id = #{id}
+    </select>
+
+    <!-- 根据问题ID查询 -->
+    <select id="findByCondition" parameterType="com.sysu.smartjob.entity.AnswerEvaluation" resultType="com.sysu.smartjob.entity.AnswerEvaluation">
+        SELECT * FROM answer_evaluations
+        <where>
+            <if test="qaRecordId != null">
+                AND qa_record_id = #{qaRecordId}
+            </if>
+            <if test="id != null">
+                AND id = #{id}
+            </if>
+        </where>
+    </select>
+
+    <!-- 更新评估记录 -->
+    <update id="update" parameterType="com.sysu.smartjob.entity.AnswerEvaluation">
+        UPDATE answer_evaluations
+        <set>
+            <if test="professionalScore != null">professional_score = #{professionalScore},</if>
+            <if test="logicScore != null">logic_score = #{logicScore},</if>
+            <if test="completenessScore != null">completeness_score = #{completenessScore},</if>
+            <if test="overallScore != null">overall_score = #{overallScore},</if>
+            <if test="aiFeedback != null">ai_feedback = #{aiFeedback},</if>
+            updated_at = #{updatedAt}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除评估记录 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM answer_evaluations WHERE id = #{id}
+    </delete>
+
+</mapper>
