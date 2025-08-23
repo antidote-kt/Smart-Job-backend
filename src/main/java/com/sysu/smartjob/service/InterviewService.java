@@ -16,8 +16,7 @@ public interface InterviewService {
     Interview createInterview(InterviewCreateDTO dto, Long userId);
     
     Interview startInterview(Long interviewId);
-    
-    InterviewQuestion getNextQuestion(Long interviewId);
+
     
     AnswerEvaluationVO submitAnswer(AnswerSubmitDTO dto);
     

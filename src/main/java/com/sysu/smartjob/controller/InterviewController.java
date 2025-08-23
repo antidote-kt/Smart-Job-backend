@@ -57,16 +57,7 @@ public class InterviewController {
         return Result.success(vo, "面试开始");
     }
 
-//    @GetMapping("/{id}/next-question")
-//    public Result<InterviewQuestionVO> getNextQuestion(@PathVariable Long id) {
-//        log.info("获取下一题，面试ID：{}", id);
-//        InterviewQuestion question = interviewService.getNextQuestion(id);
-//
-//        InterviewQuestionVO vo = new InterviewQuestionVO();
-//        BeanUtils.copyProperties(question, vo);
-//
-//        return Result.success(vo, "获取题目成功");
-//    }
+
 
     @PostMapping("/submit-answer")
     public Result<AnswerEvaluationVO> submitAnswer(@RequestBody AnswerSubmitDTO dto) {

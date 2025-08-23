@@ -83,12 +83,6 @@ public class InterviewServiceImpl implements InterviewService {
         return interview;
     }
 
-    @Override
-    public InterviewQuestion getNextQuestion(Long interviewId) {
-        QuestionGenerationContext context = prepareQuestionGeneration(interviewId);
-        String questionText = chatService.chat(interviewId.intValue(), context.prompt);
-        return saveQuestion(interviewId, questionText);
-    }
     
     private QuestionGenerationContext prepareQuestionGeneration(Long interviewId) {
         Interview interview = interviewMapper.findById(interviewId);
@@ -197,6 +191,15 @@ public class InterviewServiceImpl implements InterviewService {
                 question.getQuestionText(),
                 dto.getUserAnswer()
         );
+        
+        log.info("生成的评估提示词长度：{}", evaluatePrompt != null ? evaluatePrompt.length() : 0);
+        log.debug("评估提示词内容：{}", evaluatePrompt);
+        
+        if (evaluatePrompt == null || evaluatePrompt.trim().isEmpty()) {
+            log.error("评估提示词为空，问题文本：{}，用户答案：{}", 
+                    question.getQuestionText(), dto.getUserAnswer());
+            throw new InterviewException("评估提示词生成失败");
+        }
         
         return new AnswerSubmissionContext(question, dto, evaluatePrompt);
     }
@@ -495,6 +498,16 @@ public class InterviewServiceImpl implements InterviewService {
             try {
                 QuestionGenerationContext context = prepareQuestionGeneration(interviewId);
                 StringBuilder fullQuestion = new StringBuilder();
+
+                // 验证提示词不为空
+                if (context.prompt == null || context.prompt.trim().isEmpty()) {
+                    log.error("问题生成提示词为空，面试ID：{}", interviewId);
+                    sink.error(new InterviewException("问题生成提示词为空"));
+                    return;
+                }
+                
+                log.info("问题生成提示词长度：{}", context.prompt.length());
+                log.debug("问题生成提示词内容：{}", context.prompt);
 
                 // 使用流式AI生成
                 chatService.chatStream(interviewId.intValue(), context.prompt)

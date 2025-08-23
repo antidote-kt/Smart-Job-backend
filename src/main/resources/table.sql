@@ -25,7 +25,7 @@ CREATE TABLE interview (
     company VARCHAR(100) COMMENT '公司名称',
     interview_type TINYINT DEFAULT 1 COMMENT '面试类型: 1-技术面试 2-HR面试 3-综合面试',
     difficulty_level TINYINT DEFAULT 2 COMMENT '难度等级: 1-简单 2-中等 3-困难',
-    status TINYINT DEFAULT 0 COMMENT '状态: 0-已创建 1-进行中 2-已完成 3-已取消',
+    status TINYINT DEFAULT 0 COMMENT '状态: 0-已创建 1-进行中 2-已完成',
     total_questions INT DEFAULT 0 COMMENT '总题目数',
     answered_questions INT DEFAULT 0 COMMENT '已回答题目数',
     overall_score DOUBLE(5,2) COMMENT '综合得分(由AI评估)',
