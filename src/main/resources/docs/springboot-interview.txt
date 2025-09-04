@@ -1,0 +1,19 @@
+Spring Boot面试题：
+
+1. 什么是Spring Boot？
+Spring Boot是基于Spring框架的快速开发工具，提供了自动配置、嵌入式服务器等特性，简化了Spring应用的开发和部署。
+
+2. Spring Boot的核心特性有哪些？
+- 自动配置（Auto Configuration）
+- 起步依赖（Starter Dependencies）  
+- 嵌入式服务器（Embedded Server）
+- 生产就绪特性（Production-ready Features）
+
+3. 什么是Spring Boot Starter？
+Starter是一组方便的依赖描述符，包含了特定功能所需的所有依赖，如spring-boot-starter-web包含了web开发所需的依赖。
+
+4. @SpringBootApplication注解的作用？
+这是一个组合注解，包含@SpringBootConfiguration、@EnableAutoConfiguration和@ComponentScan三个注解。
+
+5. Spring Boot如何实现自动配置？
+通过@EnableAutoConfiguration注解和spring.factories文件实现，根据classpath中的类自动配置bean。

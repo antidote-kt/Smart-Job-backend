@@ -9,6 +9,7 @@ import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
+import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,11 +20,14 @@ import java.util.List;
 public class RagConfig {
     @Resource
     private EmbeddingModel embeddingModel;
-    @Resource
-    private EmbeddingStore<TextSegment>  embeddingStore;
 
     @Bean
-    public ContentRetriever contentRetriever(){
+    public EmbeddingStore<TextSegment> embeddingStore() {
+        return new InMemoryEmbeddingStore<>();
+    }
+
+    @Bean
+    public ContentRetriever contentRetriever(EmbeddingStore<TextSegment> embeddingStore){
         // 加载文档
         List<Document> documents = FileSystemDocumentLoader.loadDocuments("src/main/resources/docs");
         // 文档切割

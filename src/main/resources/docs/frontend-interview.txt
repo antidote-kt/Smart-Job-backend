@@ -1,0 +1,30 @@
+前端技术面试题：
+
+1. HTML5的新特性？
+- 语义化标签（header、nav、section、article、footer）
+- 新的表单控件（date、email、url、search）
+- Canvas画布和SVG矢量图形
+- 本地存储（localStorage、sessionStorage）
+- 地理定位API
+- Web Workers
+
+2. CSS3的新特性？
+- 圆角边框（border-radius）
+- 阴影效果（box-shadow、text-shadow）
+- 渐变效果（linear-gradient、radial-gradient）
+- 2D/3D转换（transform）
+- 动画和过渡（animation、transition）
+- 弹性盒子布局（flexbox）
+- 网格布局（CSS Grid）
+
+3. JavaScript的数据类型？
+基本类型：number、string、boolean、null、undefined、symbol、bigint
+引用类型：object（包括array、function、date等）
+
+4. 什么是闭包？
+闭包是指函数可以访问其外部作用域中的变量，即使外部函数已经返回。
+
+5. Promise的三种状态？
+- pending（待定）：初始状态
+- fulfilled（已兑现）：操作成功完成
+- rejected（已拒绝）：操作失败
