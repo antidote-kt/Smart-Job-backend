@@ -27,13 +27,19 @@ spring:
           max-wait: -1ms
           max-idle: 10
           min-idle: 2
-  # RocketMQ配置
-  rocketmq:
-    name-server: ${ROCKETMQ_NAME_SERVER:localhost:9876}
-    producer:
-      group: smartjob-producer-group
-      send-message-timeout: 30000
-      retry-times-when-send-failed: 3
+  # RabbitMQ配置
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+    virtual-host: ${RABBITMQ_VHOST}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000ms
 server:
   port: ${SERVER_PORT}
 mybatis:

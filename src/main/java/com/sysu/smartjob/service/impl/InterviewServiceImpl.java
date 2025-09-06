@@ -17,7 +17,11 @@ import com.sysu.smartjob.mapper.AnswerEvaluationMapper;
 import com.sysu.smartjob.mapper.InterviewQuestionMapper;
 import com.sysu.smartjob.mapper.InterviewReportMapper;
 import com.sysu.smartjob.service.InterviewService;
+import com.sysu.smartjob.service.NotificationService;
 import com.sysu.smartjob.utils.JsonParseUtil;
+import com.sysu.smartjob.utils.RedisUtil;
+import com.sysu.smartjob.constant.RedisKeyConstant;
+import com.sysu.smartjob.context.BaseContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +32,7 @@ import reactor.core.publisher.Flux;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -49,6 +54,15 @@ public class InterviewServiceImpl implements InterviewService {
 
     @Autowired
     private InterviewReportMapper interviewReportMapper;
+
+    @Autowired
+    private RedisUtil redisUtil;
+
+    @Autowired
+    private MessageProducerService messageProducerService;
+
+    @Autowired
+    private NotificationService notificationService;
 
 
     @Override
@@ -80,6 +94,11 @@ public class InterviewServiceImpl implements InterviewService {
         interview.setUpdatedAt(LocalDateTime.now());
 
         interviewMapper.update(interview);
+        
+        // 清除缓存保持一致性
+        clearInterviewCache(interview.getUserId(), interviewId);
+        log.debug("面试状态更新，清除缓存，ID: {}", interviewId);
+        
         return interview;
     }
 
@@ -104,26 +123,17 @@ public class InterviewServiceImpl implements InterviewService {
         return new QuestionGenerationContext(interview, existingQuestions, questionPrompt);
     }
     
-    private InterviewQuestion saveQuestion(Long interviewId, String questionText) {
+    private void saveQuestion(Long interviewId, String questionText) {
         InterviewQuestion question = InterviewQuestion.builder()
                 .interviewId(interviewId)
                 .questionText(questionText)
                 .build();
 
         questionMapper.insert(question);
-        return question;
     }
-    
-    private static class QuestionGenerationContext {
-        final Interview interview;
-        final List<InterviewQuestion> existingQuestions;
-        final String prompt;
-        
-        QuestionGenerationContext(Interview interview, List<InterviewQuestion> existingQuestions, String prompt) {
-            this.interview = interview;
-            this.existingQuestions = existingQuestions;
-            this.prompt = prompt;
-        }
+
+    private record QuestionGenerationContext(Interview interview, List<InterviewQuestion> existingQuestions,
+                                             String prompt) {
     }
 
     private static String getPrompt(List<InterviewQuestion> existingQuestions, Interview interview) {
@@ -242,18 +252,13 @@ public class InterviewServiceImpl implements InterviewService {
         interview.setAnsweredQuestions(interview.getAnsweredQuestions() + 1);
         interview.setUpdatedAt(LocalDateTime.now());
         interviewMapper.update(interview);
-    }
-    
-    private static class AnswerSubmissionContext {
-        final InterviewQuestion question;
-        final AnswerSubmitDTO dto;
-        final String evaluatePrompt;
         
-        AnswerSubmissionContext(InterviewQuestion question, AnswerSubmitDTO dto, String evaluatePrompt) {
-            this.question = question;
-            this.dto = dto;
-            this.evaluatePrompt = evaluatePrompt;
-        }
+        // 清除缓存保持一致性
+        clearInterviewCache(interview.getUserId(), interviewId);
+        log.debug("面试进度更新，清除缓存，ID: {}", interviewId);
+    }
+
+    private record AnswerSubmissionContext(InterviewQuestion question, AnswerSubmitDTO dto, String evaluatePrompt) {
     }
     @Transactional
     @Override
@@ -308,27 +313,120 @@ public class InterviewServiceImpl implements InterviewService {
         interviewMapper.update(interview);
         log.info("面试状态已更新完成，面试ID：{}", interviewId);
         
-        // 自动生成面试报告
-        generateInterviewReport(interviewId);
+        // 清除面试缓存（保持数据一致性）
+        clearInterviewCache(interview.getUserId(), interviewId);
+        log.debug("清除面试缓存，ID: {}", interviewId);
+        
+        // 异步生成面试报告
+        try {
+            messageProducerService.sendInterviewReportGenerationMessage(interviewId);
+            log.info("已发送面试报告生成消息，面试ID: {}", interviewId);
+        } catch (Exception e) {
+            log.error("发送面试报告生成消息失败，面试ID: {}", interviewId, e);
+            // 消息发送失败不影响面试结束流程
+        }
         
         return interview;
     }
 
     @Override
     public List<Interview> getUserInterviews(Long userId) {
+        // 1. 先从缓存获取
+        String pattern = RedisKeyConstant.getUserInterviewsPattern(userId);
+        Set<String> cacheKeys = redisUtil.keys(pattern);
+        
+        if (!cacheKeys.isEmpty()) {
+            List<Object> cachedObjects = redisUtil.multiGet(cacheKeys);
+            List<Interview> cachedInterviews = new ArrayList<>();
+            
+            for (Object obj : cachedObjects) {
+                if (obj instanceof Interview) {
+                    cachedInterviews.add((Interview) obj);
+                }
+            }
+            
+            if (!cachedInterviews.isEmpty()) {
+                log.debug("从缓存获取用户面试列表，用户ID: {}, 数量: {}", userId, cachedInterviews.size());
+                return cachedInterviews;
+            }
+        }
+        
+        // 2. 缓存未命中，查数据库
         Interview query = Interview.builder().userId(userId).build();
-        return interviewMapper.findByCondition(query);
+        List<Interview> interviews = interviewMapper.findByCondition(query);
+        
+        // 3. 缓存结果（每个面试单独缓存）
+        if (interviews != null && !interviews.isEmpty()) {
+            for (Interview interview : interviews) {
+                String cacheKey = RedisKeyConstant.getUserInterviewKey(userId, interview.getId());
+                redisUtil.set(cacheKey, interview, 60); // 缓存60分钟
+            }
+            log.debug("用户面试列表已缓存，用户ID: {}, 数量: {}", userId, interviews.size());
+        }
+        
+        return interviews;
     }
 
     @Override
     public Interview getInterviewById(Long interviewId) {
-        return interviewMapper.findById(interviewId);
+        // 获取当前用户ID
+        Long userId = BaseContext.getCurrentId();
+        if (userId == null) {
+            // 如果无法获取用户ID，直接查数据库
+            return interviewMapper.findById(interviewId);
+        }
+        
+        // 1. 先从缓存获取
+        String cacheKey = RedisKeyConstant.getUserInterviewKey(userId, interviewId);
+        Object cached = redisUtil.get(cacheKey);
+        if (cached instanceof Interview) {
+            log.debug("从缓存获取面试信息，用户ID: {}, 面试ID: {}", userId, interviewId);
+            return (Interview) cached;
+        }
+        
+        // 2. 缓存未命中，查数据库
+        Interview interview = interviewMapper.findById(interviewId);
+        
+        // 3. 缓存结果（如果查到数据且属于当前用户）
+        if (interview != null && userId.equals(interview.getUserId())) {
+            redisUtil.set(cacheKey, interview, 30); // 缓存30分钟
+            log.debug("面试信息已缓存，用户ID: {}, 面试ID: {}", userId, interviewId);
+        }
+        
+        return interview;
     }
 
     @Override
     public List<InterviewQuestion> getInterviewQuestions(Long interviewId) {
+        // 获取当前用户ID
+        Long userId = BaseContext.getCurrentId();
+        if (userId == null) {
+            // 如果无法获取用户ID，直接查数据库
+            InterviewQuestion query = InterviewQuestion.builder().interviewId(interviewId).build();
+            return questionMapper.findByCondition(query);
+        }
+        
+        // 1. 先从缓存获取
+        String cacheKey = RedisKeyConstant.getInterviewQuestionsKey(userId, interviewId);
+        Object cached = redisUtil.get(cacheKey);
+        if (cached instanceof List<?>) {
+            @SuppressWarnings("unchecked")
+            List<InterviewQuestion> cachedQuestions = (List<InterviewQuestion>) cached;
+            log.debug("从缓存获取面试题目列表，用户ID: {}, 面试ID: {}, 数量: {}", userId, interviewId, cachedQuestions.size());
+            return cachedQuestions;
+        }
+        
+        // 2. 缓存未命中，查数据库
         InterviewQuestion query = InterviewQuestion.builder().interviewId(interviewId).build();
-        return questionMapper.findByCondition(query);
+        List<InterviewQuestion> questions = questionMapper.findByCondition(query);
+        
+        // 3. 缓存结果
+        if (questions != null) {
+            redisUtil.set(cacheKey, questions, 30); // 缓存30分钟
+            log.debug("面试题目列表已缓存，用户ID: {}, 面试ID: {}, 数量: {}", userId, interviewId, questions.size());
+        }
+        
+        return questions;
     }
 
     @Override
@@ -357,6 +455,11 @@ public class InterviewServiceImpl implements InterviewService {
         
         // 删除面试记录
         interviewMapper.deleteById(interviewId);
+        
+        // 清除相关缓存（保持完整性）
+        Long userId = BaseContext.getCurrentId();
+        clearInterviewCache(userId, interviewId);
+        log.debug("面试删除，清除缓存，ID: {}", interviewId);
     }
 
     @Override
@@ -446,6 +549,19 @@ public class InterviewServiceImpl implements InterviewService {
         interviewReportMapper.insert(report);
         
         log.info("面试报告生成完成，面试ID：{}，综合得分：{}", interviewId, avgOverall);
+        
+        // 发送报告生成完成通知
+        try {
+            Interview interview = interviewMapper.findById(interviewId);
+            if (interview != null) {
+                String notificationMessage = String.format("您的面试报告已生成完成，综合得分：%.1f分", avgOverall);
+                notificationService.sendReportGeneratedNotification(interview.getUserId(), interviewId, notificationMessage);
+                log.info("报告生成通知已发送，用户ID：{}，面试ID：{}", interview.getUserId(), interviewId);
+            }
+        } catch (Exception e) {
+            // 通知发送失败不应该影响主流程
+            log.error("发送报告生成通知失败，面试ID：{}", interviewId, e);
+        }
     }
 
     @Override
@@ -507,14 +623,11 @@ public class InterviewServiceImpl implements InterviewService {
                 }
                 
                 log.info("问题生成提示词长度：{}", context.prompt.length());
-                log.debug("问题生成提示词内容：{}", context.prompt);
 
                 // 使用流式AI生成
                 chatService.chatStream(interviewId.intValue(), context.prompt)
                     .doOnNext(chunk -> {
                         log.info("AI生成原始片段: {}", chunk);
-                        log.info("片段字节数: {}", chunk.getBytes().length);
-                        log.info("片段UTF-8字节: {}", java.util.Arrays.toString(chunk.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
                         fullQuestion.append(chunk);
                         sink.next(chunk);
                     })
@@ -524,6 +637,11 @@ public class InterviewServiceImpl implements InterviewService {
                         // 异步保存完整问题到数据库
                         try {
                             saveQuestion(interviewId, fullQuestion.toString());
+                            
+                            // 清除面试缓存（因为状态可能变化）
+                            Long userId = BaseContext.getCurrentId();
+                            clearInterviewCache(userId, interviewId);
+                            
                             // 发送完成标志
                             sink.next("[DONE]");
                         } catch (Exception e) {
@@ -543,5 +661,24 @@ public class InterviewServiceImpl implements InterviewService {
                 sink.error(e);
             }
         });
+    }
+    
+    /**
+     * 清除面试相关的所有缓存
+     * @param userId 用户ID
+     * @param interviewId 面试ID
+     */
+    private void clearInterviewCache(Long userId, Long interviewId) {
+        if (userId == null) {
+            return;
+        }
+        
+        // 删除面试详情缓存
+        String interviewKey = RedisKeyConstant.getUserInterviewKey(userId, interviewId);
+        redisUtil.delete(interviewKey);
+        
+        // 删除面试题目缓存
+        String questionsKey = RedisKeyConstant.getInterviewQuestionsKey(userId, interviewId);
+        redisUtil.delete(questionsKey);
     }
 }
