@@ -130,6 +130,13 @@ public class InterviewServiceImpl implements InterviewService {
                 .build();
 
         questionMapper.insert(question);
+        
+        // 清除面试题目缓存，确保前端能获取到最新问题
+        Interview interview = interviewMapper.findById(interviewId);
+        if (interview != null) {
+            clearInterviewCache(interview.getUserId(), interviewId);
+            log.debug("新问题已保存，清除缓存，面试ID: {}", interviewId);
+        }
     }
 
     private record QuestionGenerationContext(Interview interview, List<InterviewQuestion> existingQuestions,

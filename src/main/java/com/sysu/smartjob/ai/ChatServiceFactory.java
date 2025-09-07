@@ -23,13 +23,13 @@ public class ChatServiceFactory {
     private ContentRetriever contentRetriever;
     @Bean
     public ChatService chatService(){
-        ChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(10);
+        ChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(20);
         ChatService chatService = AiServices.builder(ChatService.class)
                 .chatModel(qwenChatModel)
                 .streamingChatModel(streamingChatModel)
                 .contentRetriever(contentRetriever)
                 .chatMemory(chatMemory)
-                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(10))
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
                 .toolProvider(mcpToolProvider)
                 .build();
         return chatService;

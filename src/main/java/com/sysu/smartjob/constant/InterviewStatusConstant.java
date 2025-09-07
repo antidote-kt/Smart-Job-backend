@@ -5,5 +5,4 @@ public class InterviewStatusConstant {
     public static final int STATUS_CREATED = 0;      // 已创建
     public static final int STATUS_IN_PROGRESS = 1;  // 进行中
     public static final int STATUS_COMPLETED = 2;    // 已完成
-    public static final int STATUS_CANCELLED = 3;    // 已取消
 }
