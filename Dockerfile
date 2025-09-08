@@ -3,16 +3,15 @@ FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
-# 复制pom.xml和maven wrapper
+# 复制pom.xml
 COPY pom.xml .
-COPY .mvn .mvn
-COPY mvnw .
 
 # 复制源代码
 COPY src src
 
 # 构建应用
-RUN ./mvnw clean package -DskipTests
+RUN apk add --no-cache maven && \
+    mvn clean package -DskipTests
 
 # 生产阶段
 FROM eclipse-temurin:21-jre-alpine
@@ -33,7 +32,7 @@ USER spring
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/actuator/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
 # 暴露端口
 EXPOSE 8080

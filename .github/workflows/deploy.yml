@@ -28,10 +28,10 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
         
     - name: 运行测试
-      run: ./mvnw test
+      run: mvn test
       
     - name: 构建应用
-      run: ./mvnw clean package -DskipTests
+      run: mvn clean package -DskipTests
       
     - name: 构建 Docker 镜像
       run: |
