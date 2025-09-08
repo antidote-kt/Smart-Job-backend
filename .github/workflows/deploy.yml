@@ -1,0 +1,99 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 设置 Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: 缓存 Maven 依赖
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: 运行测试
+      run: ./mvnw test
+      
+    - name: 构建应用
+      run: ./mvnw clean package -DskipTests
+      
+    - name: 构建 Docker 镜像
+      run: |
+        docker build -t smartjob-backend:${{ github.sha }} .
+        docker tag smartjob-backend:${{ github.sha }} smartjob-backend:latest
+        
+    - name: 登录到 Docker Registry
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      
+    - name: 推送 Docker 镜像
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      run: |
+        docker tag smartjob-backend:latest ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:${{ github.sha }}
+        docker tag smartjob-backend:latest ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:${{ github.sha }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:latest
+        
+    - name: 部署到服务器
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          # 登录 Docker
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          
+          # 拉取最新镜像
+          docker pull ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:latest
+          
+          # 停止并删除旧容器（如果存在）
+          docker stop smartjob-backend || true
+          docker rm smartjob-backend || true
+          
+          # 启动新容器
+          docker run -d \
+            --name smartjob-backend \
+            --restart unless-stopped \
+            -p 8080:8080 \
+            -e SPRING_PROFILES_ACTIVE=prod \
+            -e MYSQL_HOST=${{ secrets.MYSQL_HOST }} \
+            -e MYSQL_PORT=${{ secrets.MYSQL_PORT }} \
+            -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
+            -e MYSQL_USERNAME=${{ secrets.MYSQL_USERNAME }} \
+            -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+            -e REDIS_HOST=${{ secrets.REDIS_HOST }} \
+            -e REDIS_PORT=${{ secrets.REDIS_PORT }} \
+            -e REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
+            -e REDIS_DATABASE=${{ secrets.REDIS_DATABASE }} \
+            -e RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }} \
+            -e RABBITMQ_PORT=${{ secrets.RABBITMQ_PORT }} \
+            -e RABBITMQ_USERNAME=${{ secrets.RABBITMQ_USERNAME }} \
+            -e RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }} \
+            -e RABBITMQ_VHOST=${{ secrets.RABBITMQ_VHOST }} \
+            -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+            -e JWT_TTL=${{ secrets.JWT_TTL }} \
+            -e DASHSCOPE_API_KEY=${{ secrets.DASHSCOPE_API_KEY }} \
+            -e BIGMODEL_API_KEY=${{ secrets.BIGMODEL_API_KEY }} \
+            ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:latest
+            
+          # 清理旧镜像
+          docker image prune -f
