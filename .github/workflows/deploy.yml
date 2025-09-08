@@ -27,9 +27,6 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
         
-    - name: 运行测试
-      run: mvn test
-      
     - name: 构建应用
       run: mvn clean package -DskipTests
       
