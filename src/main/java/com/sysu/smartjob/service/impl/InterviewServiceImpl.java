@@ -81,6 +81,11 @@ public class InterviewServiceImpl implements InterviewService {
                 .build();
 
         interviewMapper.insert(interview);
+        
+        // 清除用户面试列表缓存，确保新面试能被看到
+        clearUserInterviewsCache(userId);
+        log.debug("新面试创建，清除用户面试列表缓存，用户ID: {}", userId);
+        
         return interview;
     }
 
@@ -687,5 +692,27 @@ public class InterviewServiceImpl implements InterviewService {
         // 删除面试题目缓存
         String questionsKey = RedisKeyConstant.getInterviewQuestionsKey(userId, interviewId);
         redisUtil.delete(questionsKey);
+        
+        // 同时清除用户面试列表缓存，确保列表状态一致
+        clearUserInterviewsCache(userId);
+    }
+    
+    /**
+     * 清除用户面试列表缓存
+     * @param userId 用户ID
+     */
+    private void clearUserInterviewsCache(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        
+        // 删除用户面试列表的所有缓存键
+        String pattern = RedisKeyConstant.getUserInterviewsPattern(userId);
+        Set<String> cacheKeys = redisUtil.keys(pattern);
+        
+        if (!cacheKeys.isEmpty()) {
+            redisUtil.delete(cacheKeys); // 传入Collection<String>而不是数组
+            log.debug("清除用户面试列表缓存，用户ID: {}, 删除缓存键数量: {}", userId, cacheKeys.size());
+        }
     }
 }
