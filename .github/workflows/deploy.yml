@@ -46,10 +46,10 @@ jobs:
     - name: 推送 Docker 镜像
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       run: |
-        docker tag smartjob-backend:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:${{ github.sha }}
-        docker tag smartjob-backend:latest ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:latest
-        docker push ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:${{ github.sha }}
-        docker push ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:latest
+        docker tag "smartjob-backend:${{ github.sha }}" "${{ secrets.DOCKER_USERNAME }}/smartjob-backend:${{ github.sha }}"
+        docker tag "smartjob-backend:latest" "${{ secrets.DOCKER_USERNAME }}/smartjob-backend:latest"
+        docker push "${{ secrets.DOCKER_USERNAME }}/smartjob-backend:${{ github.sha }}"
+        docker push "${{ secrets.DOCKER_USERNAME }}/smartjob-backend:latest"
         
     - name: 部署到服务器
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
