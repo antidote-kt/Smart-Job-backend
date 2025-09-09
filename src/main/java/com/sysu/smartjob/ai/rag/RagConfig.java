@@ -14,6 +14,9 @@ import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,11 +35,13 @@ public class RagConfig {
         List<Document> documents = new ArrayList<>();
         
         try {
-            // 尝试从resources/docs目录加载文档
-            String docsPath = getClass().getClassLoader().getResource("docs").getPath();
-            documents = FileSystemDocumentLoader.loadDocuments(docsPath);
+            URL docsUrl = getClass().getClassLoader().getResource("docs");
+            if (docsUrl != null) {
+                Path docsPath = Paths.get(docsUrl.toURI());
+                documents = FileSystemDocumentLoader.loadDocuments(docsPath);
+                System.out.println("成功加载 " + documents.size() + " 个文档");
+            }
         } catch (Exception e) {
-            // 如果无法加载文档，使用空列表继续运行
             System.out.println("无法加载docs文档: " + e.getMessage());
         }
         
@@ -50,7 +55,12 @@ public class RagConfig {
                         textSegment.metadata()))
                 .documentSplitter(splitter)
                 .build();
-        ingestor.ingest(documents);
+        
+        // 只有在有文档时才进行摄取
+        if (!documents.isEmpty()) {
+            ingestor.ingest(documents);
+        }
+        
         // 构建检索器
         EmbeddingStoreContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
                 .embeddingModel(embeddingModel)
