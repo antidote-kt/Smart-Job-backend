@@ -39,11 +39,15 @@ jobs:
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
       
-    - name: 推送 Docker 镜像
+    - name: 标记 Docker 镜像
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       run: |
         docker tag smartjob-backend:latest ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:${{ github.sha }}
         docker tag smartjob-backend:latest ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:latest
+        
+    - name: 推送 Docker 镜像
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:${{ github.sha }}
         docker push ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:latest
         
