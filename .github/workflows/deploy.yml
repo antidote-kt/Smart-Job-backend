@@ -30,10 +30,14 @@ jobs:
     - name: 构建应用
       run: mvn clean package -DskipTests
       
+    - name: 显示构建结果
+      run: ls -la target/
+      
     - name: 构建 Docker 镜像
       run: |
         docker build -t smartjob-backend:${{ github.sha }} .
         docker tag smartjob-backend:${{ github.sha }} smartjob-backend:latest
+        docker images | grep smartjob-backend
         
     - name: 登录到 Docker Registry
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
