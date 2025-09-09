@@ -14,6 +14,7 @@ import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
@@ -28,8 +29,17 @@ public class RagConfig {
 
     @Bean
     public ContentRetriever contentRetriever(EmbeddingStore<TextSegment> embeddingStore){
-        // 加载文档
-        List<Document> documents = FileSystemDocumentLoader.loadDocuments("src/main/resources/docs");
+        List<Document> documents = new ArrayList<>();
+        
+        try {
+            // 尝试从resources/docs目录加载文档
+            String docsPath = getClass().getClassLoader().getResource("docs").getPath();
+            documents = FileSystemDocumentLoader.loadDocuments(docsPath);
+        } catch (Exception e) {
+            // 如果无法加载文档，使用空列表继续运行
+            System.out.println("无法加载docs文档: " + e.getMessage());
+        }
+        
         // 文档切割
         DocumentByParagraphSplitter splitter = new DocumentByParagraphSplitter(1000, 200);
         // 向量化并存储
