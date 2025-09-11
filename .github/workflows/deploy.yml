@@ -74,19 +74,19 @@ jobs:
           docker run -d \
             --name smartjob-backend \
             --restart unless-stopped \
-            -p 8080:8080 \
+            --network host \
             -e SPRING_PROFILES_ACTIVE=prod \
-            -e MYSQL_HOST=${{ secrets.MYSQL_HOST }} \
-            -e MYSQL_PORT=${{ secrets.MYSQL_PORT }} \
+            -e MYSQL_HOST=127.0.0.1 \
+            -e MYSQL_PORT=3306 \
             -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
             -e MYSQL_USERNAME=${{ secrets.MYSQL_USERNAME }} \
             -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
-            -e REDIS_HOST=${{ secrets.REDIS_HOST }} \
-            -e REDIS_PORT=${{ secrets.REDIS_PORT }} \
+            -e REDIS_HOST=127.0.0.1 \
+            -e REDIS_PORT=6379 \
             -e REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
             -e REDIS_DATABASE=${{ secrets.REDIS_DATABASE }} \
-            -e RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }} \
-            -e RABBITMQ_PORT=${{ secrets.RABBITMQ_PORT }} \
+            -e RABBITMQ_HOST=127.0.0.1 \
+            -e RABBITMQ_PORT=5672 \
             -e RABBITMQ_USERNAME=${{ secrets.RABBITMQ_USERNAME }} \
             -e RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }} \
             -e RABBITMQ_VHOST=${{ secrets.RABBITMQ_VHOST }} \
