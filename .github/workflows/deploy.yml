@@ -63,6 +63,9 @@ jobs:
           # 登录 Docker
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           
+          # 创建自定义网络（如果不存在）
+          docker network create smartjob-network || true
+          
           # 拉取最新镜像
           docker pull ${{ secrets.DOCKER_USERNAME }}/smartjob-backend:latest
           
@@ -70,22 +73,25 @@ jobs:
           docker stop smartjob-backend || true
           docker rm smartjob-backend || true
           
-          # 启动新容器
+          # 启动新容器 - 使用自定义网络和host.docker.internal访问宿主机服务
           docker run -d \
             --name smartjob-backend \
             --restart unless-stopped \
-            --network host \
+            --network smartjob-network \
+            --network-alias smartjob-backend \
+            --add-host host.docker.internal:host-gateway \
+            -p 8080:8080 \
             -e SPRING_PROFILES_ACTIVE=prod \
-            -e MYSQL_HOST=127.0.0.1 \
+            -e MYSQL_HOST=host.docker.internal \
             -e MYSQL_PORT=3306 \
             -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
             -e MYSQL_USERNAME=${{ secrets.MYSQL_USERNAME }} \
             -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
-            -e REDIS_HOST=127.0.0.1 \
+            -e REDIS_HOST=host.docker.internal \
             -e REDIS_PORT=6379 \
             -e REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
             -e REDIS_DATABASE=${{ secrets.REDIS_DATABASE }} \
-            -e RABBITMQ_HOST=127.0.0.1 \
+            -e RABBITMQ_HOST=host.docker.internal \
             -e RABBITMQ_PORT=5672 \
             -e RABBITMQ_USERNAME=${{ secrets.RABBITMQ_USERNAME }} \
             -e RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }} \
